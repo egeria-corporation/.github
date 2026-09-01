@@ -237,3 +237,86 @@ pinning it.
 - R2 pricing changing such that egress is no longer free.
 - Download volume making the Cloudflare cache in front of the bucket insufficient, which would be a
   good problem and a tuning exercise rather than a change of host.
+
+---
+
+## D-004 — Free reports, gated workflow
+
+**Date:** 2026-09-01 · **Status:** implemented (grantcheck) · **Decided by:** the user
+
+Per-EIN reports, the check explainers and the JSON API are open, uncredentialed and crawlable.
+An email address unlocks bulk check, saved rosters with monthly monitoring, and export.
+
+### Why this split and not another
+
+The reason to build a hosted companion at all is that a permanent, citable page per organization
+is worth indexing and quoting. A login wall destroys exactly that property: a page a crawler
+cannot read is a page no model can cite, and the argument for the site collapses. So the rule is
+narrower than "gate the good stuff" — **signing in must never be the price of an answer.**
+
+What is behind the gate is what genuinely needs to remember something across visits. Monitoring
+cannot notify without an address. A roster cannot persist without an identity. Export is only
+meaningful over a saved set. None of the three has any search value, so nothing is lost by
+closing them.
+
+### The privacy exception this creates, stated plainly
+
+The architecture forbids profiling who looked up which EIN. A saved roster is precisely such a
+join, and it is a deliberate, scoped exception:
+
+- It exists only for accounts, only for organizations the account deliberately saved, and only
+  because monitoring cannot work otherwise.
+- Report pages remain unassociated with any account, signed in or not. They are served from cache
+  and no per-account read is recorded.
+- Deleting an account removes the roster, sessions and pending links immediately, with no email
+  and no waiting. Leaving has to be real or the exception is not scoped, it is just a promise.
+
+### Magic links, not passwords
+
+Chosen by the user. There is no password to store, hash, rotate, reset or leak, and no
+password-reset flow — the flow that most often goes wrong. The database holds a SHA-256 of each
+token and never the token, so reading it does not hand out live sessions. Links are single-use
+and expire in fifteen minutes.
+
+Requesting a link creates no account: the pending email and name live on the token row, and an
+account exists only once somebody has proved they can read that inbox. That is not incidental —
+it is what lets the sign-in email honestly tell an unintended recipient that nothing was created
+for them.
+
+### What would reopen this
+
+- Evidence that the free tier is being scraped in a way that costs real money, which would argue
+  for rate limits on the JSON API rather than for gating pages.
+- A monitoring volume that outgrows a single scheduled Worker invocation.
+
+---
+
+## D-005 — The 00 EIN prefix is real
+
+**Date:** 2026-09-01 · **Status:** implemented · **Supersedes:** an assumption, not a decision
+
+Both implementations rejected every EIN beginning `00`, with the comment "the IRS does not issue
+prefix 00". **That is false**, and the IRS's own published files disprove it.
+
+The August 2026 index carries **136 organizations with prefix 00** — 19 in the Business Master
+File, 14 listed in Publication 78, and **90 on the automatic revocation list**. They are mostly
+churches and small religious organizations.
+
+The 90 are why this mattered. For an organization whose exemption is genuinely revoked — the
+hardest of the hard stops this tool exists to find — grantcheck answered *"not a valid EIN"*. A
+caller reads that as a typo and moves on. It converted a blocking finding into a silent one,
+which is the worst failure mode available to a readiness check.
+
+Now only the all-zeros placeholder is rejected. `00-0000000` still fails on format and still
+never reaches the network.
+
+### The general lesson, which is the point of writing this down
+
+Ten EIN prefixes genuinely were never issued (07, 09, 17, 18, 19, 28, 29, 49, 79, 89) — that was
+established by counting the real data. Prefix 00 was rejected on an assumption that *sounded*
+like the same kind of fact and was never checked against the files. **Validation rules that
+exclude real records are worse than no validation**, because they fail closed and silently, and
+the caller cannot tell an invalid input from an unwelcome one.
+
+Every remaining validation rule in either implementation should be traceable to a count over the
+published data, not to plausibility.
