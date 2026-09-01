@@ -13,3 +13,6 @@ SHORTLIST.md
 # vendor's own pricing page and date-stamped. Repos get a vendored copy with that
 # section withheld; see docs/program/RESEARCH.md in any of the five.
 RESEARCH.md
+
+# Internal only — never tracked.
+internal/
