@@ -1,0 +1,15 @@
+# This directory is published as the PUBLIC repository egeria-corporation/.github,
+# which is what makes the org profile README render. Everything tracked here is public.
+#
+# The two files below are deliberately untracked. They stay local.
+
+# Competitive strategy. Describes the commoditization play in terms that are fine
+# internally and are not something to hand a competitor.
+SHORTLIST.md
+
+# The research dossier carries competitor pricing, several figures sourced from a
+# third-party comparison rather than a vendor's own page and marked VERIFY. Program
+# rule: no competitor price goes into public copy until it is re-verified on the
+# vendor's own pricing page and date-stamped. Repos get a vendored copy with that
+# section withheld; see docs/program/RESEARCH.md in any of the five.
+RESEARCH.md
