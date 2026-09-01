@@ -176,3 +176,64 @@ A deliberate decision that a specific piece of public copy needs a named compari
 a launch post, a conference talk. That is a communications decision, made once, for one artifact,
 and it does not change what lives in the repositories.
 
+---
+
+## D-003 — Publish the index to Cloudflare R2, mirror to GitHub Releases
+
+**Decided:** 2026-09-01 · **Status:** accepted · **Affects:** `grantcheck`, and the pattern every
+later repo that publishes a dataset will follow
+
+### The decision
+
+The published index lives at **`https://index.check.opengrants.io`**, backed by the
+`grantcheck-index` R2 bucket on our own Cloudflare zone. A GitHub Release is published from the same
+build as the documented mirror.
+
+### Why R2 rather than a metered host
+
+Every user download is egress. R2 charges nothing for egress, so success is close to free; on a
+metered platform the program working as designed becomes a bill, which is the failure mode where a
+tool gets quietly throttled the moment it starts being useful. This is the reasoning already in
+`HOSTING.md`; this decision is it being applied.
+
+**Custom domain rather than the `r2.dev` subdomain.** Cloudflare rate-limits `r2.dev` and documents
+it as unsuitable for production. The custom domain also means the URL is ours: if the storage ever
+moves, the URL does not.
+
+### Why PyPI is not part of this and cannot be
+
+PyPI and Cloudflare are not alternatives. `uvx grantcheck` works because `uvx` resolves the name from
+a Python package registry, and Cloudflare does not host one. The only alternative is
+`uvx --from git+https://…`, which works but breaks the program's hard rule of one command and a real
+result in under sixty seconds, and requires git.
+
+With Trusted Publishing there is no token to store or rotate, so PyPI is in practice the
+lowest-management component in the stack.
+
+### Published layout
+
+```
+index.check.opengrants.io/manifest.json              the "latest" pointer, 5 minute cache
+index.check.opengrants.io/{vintage}/manifest.json    the pinned copy
+index.check.opengrants.io/{vintage}/shard-{NN}...    immutable, 1 year cache
+```
+
+Shards upload first and the manifest last, because the manifest is the commit point: until it
+changes, clients keep resolving the previous vintage consistently, so a half-finished upload cannot
+leave anyone reading a partial index.
+
+The client resolves both the R2 layout and the flat release-mirror layout without configuration,
+because GitHub release asset names cannot contain a slash.
+
+### What this cost us to learn
+
+Cloudflare returns **403 to the default `Python-urllib` User-Agent**. The upload succeeded and the
+workflow's own verification step then failed fetching what it had just published. The descriptive
+User-Agent in the client is therefore load-bearing rather than decorative, and there are now tests
+pinning it.
+
+### What would reopen this
+
+- R2 pricing changing such that egress is no longer free.
+- Download volume making the Cloudflare cache in front of the bucket insufficient, which would be a
+  good problem and a tuning exercise rather than a change of host.
