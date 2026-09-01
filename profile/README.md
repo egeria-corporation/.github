@@ -1,6 +1,6 @@
 # Egeria Corporation
 
-Free, open source tools for grant consultants, nonprofit fundraising consultants, and emerging
+In addition to our flagship API and OpenGrants platform, Egeria Corporation provides free, open source tools for grant consultants, nonprofit fundraising consultants, and emerging
 development professionals — for work that currently costs four figures a year.
 
 Everything here is Apache 2.0. Sponsored by [OpenGrants](https://opengrants.io).
