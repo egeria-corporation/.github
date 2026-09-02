@@ -320,3 +320,59 @@ the caller cannot tell an invalid input from an unwelcome one.
 
 Every remaining validation rule in either implementation should be traceable to a count over the
 published data, not to plausibility.
+
+---
+
+## D-006 — Resolve by XPath, not by the concordance's `versions` column
+
+**Date:** 2026-09-02 · **Status:** implemented (funder-graph M1) · **Supersedes:** an assumption in the build prompt
+
+The funder-graph build prompt's stop-and-ask #1 says: if the concordance covers less than ~95%
+of filings by volume, stop — the project becomes a concordance-contribution project first. The
+first measurement against real filings looked like exactly that, and was not.
+
+### What the data said
+
+- **Form 990-PF is not in `concordance.csv`.** That file (6,864 rows) carries the core 990 and
+  every schedule and has zero 990-PF rows. Part XV lives in a separate file,
+  `02-concordance-foundations/F990-PF-FULL.CSV`. A loader reading only the main file reports 0%
+  coverage of the primary edge list. It is a file-layout fact, not a coverage fact.
+- **The `versions` column is stale; the XPaths are not.** Annotations for the Part XV and
+  Schedule I subtrees stop at `2016v3.0` / `2018v3.x`. The XPaths flagged `current_version = T`
+  match 2019–2022 filings exactly: every required Part XV field resolved on real filings at
+  `2020v4.0`, `2021v4.2` and `2022v5.0`, and four Part XV rows summed to the filer's own stated
+  total with delta zero. Schedule I resolved 12 of 17 fields on a `2021v4.2` filing, the five
+  misses being optional leaves genuinely absent from it — and every Schedule I row carries an
+  *empty* `current_version`, so "not flagged" cannot mean "not current" there.
+- **Upstream already holds the per-version truth.** `03-versions/raw-mappings/` has one XPath
+  inventory per schema version, `2016v3.0` through `2022v5.0`, each listing the 18 Part XV and
+  20 Schedule I XPaths. The `versions` column was never regenerated from them.
+
+### The decision
+
+Field resolution selects the concordance's current XPaths and **does not gate on `versions`**.
+A missing annotation is an upstream metadata gap to report, never evidence a field is unmapped.
+Per-version presence is measured against `raw-mappings/` instead — the coverage matrix is a
+join, not a hand-check — and the report distinguishes "resolved by XPath" from "annotated
+upstream" so the gap stays visible and honest.
+
+The contribution we owe upstream is therefore a PR that extends `versions` from their own
+inventories, weighted by real filing volume, not a complaint that coverage is missing.
+
+### Corrections to the build prompt's operating assumptions, all verified 2026-09-01
+
+- The IRS year directory listing returns 404; enumerate the landing page's hrefs instead.
+- There is no per-filing URL anywhere — IRS, the old S3 mirror, or ProPublica. `fetch-raw`
+  must stream one member out of its ZIP.
+- `SUB_DATE` is year-only in `index_2023.csv`. The index carries no ZIP column.
+- `RecipientPersonNm` is routinely populated with organization names and, separately, appears
+  in `ApplicationSubmissionInfoGrp` for the application contact. Neither may become a grant row
+  to a person without the spec's "no organizational tokens" clause and a group-scoped read.
+- Attachment-filed Part XV has a second shape the empty-group check misses: one placeholder row
+  reading `VARIOUS ORGANIZATIONS / SEE ATTACHED SCHEDULE`, here for $9.76M.
+
+### The general lesson
+
+A measurement that says "0% coverage" deserves one more hour before it becomes a strategy
+decision. Both times it appeared here it was an artifact — a second file, a stale column — and
+the fix was to read the source layout, not to change the project's shape.
