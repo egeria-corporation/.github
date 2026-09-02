@@ -410,3 +410,38 @@ match and must not be published as one. README and CHANGELOG record the addition
 The labeled evaluation set (>= 1,000 hand-verified pairs) and the per-tier precision gates are
 an M4 exit criterion, not a design choice; they require the real corpus and the real BMF, and
 "hand-verified" means a person checked them.
+
+## D-008 — A coverage gate measures mapping, not data completeness
+
+**Date:** 2026-09-02. **Repos:** funder-graph. **Status:** decided.
+
+The first `build map` over the 2023 posting (469,093 grant-bearing filings) read **93.36%** and
+stopped the build at the 95% gate, as the build spec requires. Read as a mapping failure it
+was the third artifact of its kind in this project (see D-006). The evidence:
+
+- Every one of the 23 XPaths present in filings that the pipeline does not consume is a
+  990-PF `ApplicationSubmissionInfoGrp` contact field or a manager name - fields NON-GOALS
+  says must never be published. No Schedule I path was unmapped.
+- Every required field resolved on every schema version for both forms; 990-PF was at
+  99.6-100% everywhere. The shortfall was Schedule I only, and per field it was
+  `recipient_ein` (resolved in 84.7% of grant-bearing 2022v5.0 filings) and `purpose`
+  (89.7%), while the recipient name resolved in 99.3%. The same XPaths that "failed" in
+  15% of filings resolved in the other 85%: the mapping was right and the filers left the
+  field blank.
+- The EIN-less grantees are domestic: 2 foreign rows in 19,000 sampled, no individuals.
+  Resolving them is what the matcher's tiers B-D exist for.
+
+**Decision.** The gate requires the fields a row cannot be published without - a recipient
+name and an amount (cash or non-cash on Schedule I) - which is what the coverage module's own
+comment had always said. Purpose, the reported EIN and the address are tallied and published
+as per-field presence, and the strict share is published beside the gate as
+`all_common_fields_pct` so the original number stays visible rather than disappearing into a
+redefinition. Corrected result: **99.43%** by volume, every version above 95%; presence
+93.54%.
+
+**The rule.** A gate must measure what its name says. "Coverage" is whether the concordance
+maps the fields we read; "completeness" is whether filers filled them. Conflating them stops
+the build on filer behavior and, worse, would tempt someone to loosen the target. When a gate
+fails, the first hour goes to checking which of the two it measured.
+
+**Not changed.** The 95% threshold, the stop-and-ask, and the reconciliation gate that follows.
