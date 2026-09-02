@@ -445,3 +445,23 @@ the build on filer behavior and, worse, would tempt someone to loosen the target
 fails, the first hour goes to checking which of the two it measured.
 
 **Not changed.** The 95% threshold, the stop-and-ask, and the reconciliation gate that follows.
+
+## D-009 — One public data bucket for the program: `opengrants-data` at `data.opengrants.io`
+
+**Date:** 2026-09-02. **Repos:** funder-graph, later grantcheck. **Status:** decided; bucket created.
+
+The README's contract is `https://data.opengrants.io/funder-graph/<version>/...`. An R2 custom
+domain maps to one bucket at its root, so the bucket that answers `data.opengrants.io` holds every
+product's published data under a product prefix: `funder-graph/`, and grantcheck's index beside it
+when it publishes. Bucket `opengrants-data` (R2, Standard, WNAM) exists as of today; the custom
+domain is attached to it. Zero egress; Cloudflare-cached.
+
+Two consequences that were not obvious and are now settled:
+
+- **`latest/` is a copy, not a pointer.** A bare R2 domain serves objects; it cannot rewrite
+  `latest/` to the current version. Each monthly publish copies the version's objects (about
+  190 MB per posting) under `latest/`. A Worker in front could alias instead; not worth a Worker
+  for a copy this size.
+- **DuckDB does not glob over HTTPS.** `read_parquet('https://.../grants/*/*.parquet')` cannot
+  work: HTTP has no directory listing. The README quickstart must either read the file list from
+  `manifest.json` or address fixed-name files. Fixing the README is M5 work.
