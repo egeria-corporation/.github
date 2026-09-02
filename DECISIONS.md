@@ -376,3 +376,37 @@ inventories, weighted by real filing volume, not a complaint that coverage is mi
 A measurement that says "0% coverage" deserves one more hour before it becomes a strategy
 decision. Both times it appeared here it was an artifact — a second file, a stale column — and
 the fix was to read the source layout, not to change the project's shape.
+
+## D-007 — Entity resolution: Metaphone for the phonetic block, DuckDB for Jaro-Winkler, resolution as its own stage
+
+**Date:** 2026-09-02. **Repos:** funder-graph. **Status:** decided.
+
+The build spec (section 7) names double metaphone of the first two name tokens as the fourth
+blocking key. funder-graph uses `jellyfish`'s Metaphone instead. The key only has to *recall*
+candidates - the score decides - and jellyfish is maintained (Rust wheels, released 2025-10),
+where every double-metaphone package on PyPI last released in 2016. If a measured recall gap on
+the labeled set is ever attributed to the phonetic block, that is the moment to revisit, not
+before.
+
+Jaro-Winkler is DuckDB's own `jaro_winkler_similarity`, computed inside the blocking query
+against both the legal and the sort name and prefiltered at the probable floor, so Python only
+ever scores plausible candidates. `JW_PROBABLE = 0.90` is our floor for the tier-D guess; the
+spec fixes only the tier-C threshold (0.94 with ZIP5 agreement).
+
+Resolution is a separate stage (`build resolve`), not a step inside normalize. The spec's
+"resolve each distinct tuple once" means the distinct
+`(name_normalized, name_raw, city, state, zip5, ein_reported, recipient_type)` tuples are read
+out of the written Parquet, resolved against `bmf`, remembered in a `resolutions` table in the
+build state, and the partitions rewritten through one join that preserves row order and count.
+Section 8's monthly update ("re-resolve last month's unresolved, never churn A/B") falls out of
+that table for free.
+
+`recipient_ein_source` gains one value, `manual_correction`, for rows assigned from
+`data/overrides/ein-corrections.csv`. A hand-verified correction is not a BMF deterministic
+match and must not be published as one. README and CHANGELOG record the addition.
+
+### What is not decided here
+
+The labeled evaluation set (>= 1,000 hand-verified pairs) and the per-tier precision gates are
+an M4 exit criterion, not a design choice; they require the real corpus and the real BMF, and
+"hand-verified" means a person checked them.
