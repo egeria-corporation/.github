@@ -465,3 +465,40 @@ Two consequences that were not obvious and are now settled:
 - **DuckDB does not glob over HTTPS.** `read_parquet('https://.../grants/*/*.parquet')` cannot
   work: HTTP has no directory listing. The README quickstart must either read the file list from
   `manifest.json` or address fixed-name files. Fixing the README is M5 work.
+
+---
+
+## D-010 — `precedent` is retired from the program
+
+**Date:** 2026-09-15. **Repos:** precedent (removed), funder-graph (link cleanup).
+**Status:** decided by the program owner; executed.
+
+`precedent` shipped a command line tool (`federal-precedent` on PyPI) and a hosted companion
+(`awards.opengrants.io`) over USAspending award history and single-audit pass-through data.
+Both are withdrawn.
+
+**The reason, stated plainly:** the award-history half is a better-rendered view of data
+USAspending already publishes for free, and being a nicer front end to somebody else's public
+dataset is not a reason for a product to exist. That question was asked at the outset, answered
+in favour of building, and answered the other way once the thing existed and could be looked at.
+The second answer is the one that counts.
+
+Two things are worth carrying forward rather than losing with the repo:
+
+- **The pass-through half was the differentiated part, and it worked.** Single-audit SEFA data
+  answers "which intermediaries re-grant federal money to organizations in this state", which
+  USAspending genuinely does not. If that question comes back, it comes back on its own terms
+  rather than bundled with a program-history browser. The verified findings about that source -
+  FAC returns `"Y"`/`"N"` where its dictionary promises booleans, its filters need `eq.N` not
+  `is.false`, and `auditee_uei` holds the literal `GSA_MIGRATION` on legacy rows - are recorded
+  in `RESEARCH.md` so they survive.
+- **Cloudflare Workers could not reach `api.usaspending.gov`.** The deployed Worker got HTTP 525,
+  Cloudflare's SSL-handshake-failed, on every request, while the same code from a laptop got 200
+  and while the Federal Audit Clearinghouse answered the same Worker normally. Any future program
+  site that wants USAspending at the edge will hit this, and should test it on day one rather
+  than at launch.
+
+**Consequence for the other repos:** funder-graph linked to `awards.opengrants.io` on every
+funder page. That link is removed. It also linked to `answers.opengrants.io`, which was never
+built - so the component had been shipping a dead link from the start. Siblings are now added
+when they launch rather than in anticipation.
