@@ -491,7 +491,8 @@ Two things are worth carrying forward rather than losing with the repo:
   rather than bundled with a program-history browser. The verified findings about that source -
   FAC returns `"Y"`/`"N"` where its dictionary promises booleans, its filters need `eq.N` not
   `is.false`, and `auditee_uei` holds the literal `GSA_MIGRATION` on legacy rows - are recorded
-  in `RESEARCH.md` so they survive.
+  in grantcheck's `docs/research/data-sources.md`, where the next thing in this program to
+  query FAC will find them.
 - **Cloudflare Workers could not reach `api.usaspending.gov`.** The deployed Worker got HTTP 525,
   Cloudflare's SSL-handshake-failed, on every request, while the same code from a laptop got 200
   and while the Federal Audit Clearinghouse answered the same Worker normally. Any future program
