@@ -11,9 +11,7 @@ Everything here is Apache 2.0. Sponsored by [OpenGrants](https://opengrants.io).
 |---|---|---|---|
 | [`grantcheck`](https://github.com/egeria-corporation/grantcheck) | Federal grant readiness by EIN — exemption status, Publication 78 deductibility, automatic revocation history, filing recency, SAM.gov registration and UEI, single-audit screen | `uvx grantcheck --ein 27-1067272` | `check.opengrants.io` |
 | [`funder-graph`](https://github.com/egeria-corporation/funder-graph) | The open 990 funding graph — who funded whom, derived from Form 990-PF Part XV and Form 990 Schedule I, published as versioned Parquet | DuckDB against a URL | `funders.opengrants.io` |
-| [`precedent`](https://github.com/egeria-corporation/precedent) | Federal award history and the pass-through finder, built on USAspending and single audit SEFA data | `uvx precedent history 93.243` | `awards.opengrants.io` |
-| [`answerbank`](https://github.com/egeria-corporation/answerbank) | Local-first Markdown narrative library with staleness flagging and an MCP server | `uvx answerbank stale` | `answers.opengrants.io` |
-| [`grantdesk`](https://github.com/egeria-corporation/grantdesk) | Pipeline, post-award compliance calendar, and win/loss ledger | `npx grantdesk demo` | `desk.opengrants.io` |
+
 
 Each repo ships a **command-line tool** for people and an **MCP server** for agents, over the same
 library. Each has a free hosted companion that adds no capability the tool lacks — it exists so
